@@ -73,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
                 try {
 
 //                    builder.setXmppDomain(Inet4Address.getLocalHost().getHostAddress());
-
                     builder.setXmppDomain("localhost");
                     builder.setHostAddress(InetAddress.getByName("10.240.252.96"));
 

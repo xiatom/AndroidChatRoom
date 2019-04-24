@@ -14,10 +14,8 @@ import java.util.List;
 
 public class MessageBoxManager {
 
-    String self;
     SQLiteDatabase db;
-    public MessageBoxManager(String self, SQLiteDatabase db){
-        this.self = self;
+    public MessageBoxManager(SQLiteDatabase db){
         this.db = db;
     }
     public List<chat_content> getMessages(){

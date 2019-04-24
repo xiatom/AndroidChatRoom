@@ -1,11 +1,16 @@
 package com.ace.xiatom.chat;
-
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
@@ -17,7 +22,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.chat2.Chat;
@@ -25,38 +29,34 @@ import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.chat2.IncomingChatMessageListener;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.tcp.*;
+import org.jivesoftware.smack.tcp.XMPPTCPConnection;
+import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
+
 import java.net.InetAddress;
 import java.util.List;
 
 
 public class ChatActivity extends AppCompatActivity {
 
-
-
+    private ChatService.NotifyBinder chatbinder;
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-
+            chatbinder = (ChatService.NotifyBinder)iBinder;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            Log.d("msg","Service Disconnected");
         }
     };
-
-
-
 
     ListView chat_list;
     chatAdapter adapter;
     List<chat_content> historyMessages;
     private final int UPDATE_TEXT = 1;
     AbstractXMPPConnection xmpptcpConnection;
-    private String username;
     private SQLiteDatabase db;
     private mySQLite dbHelper;
     MessageBoxManager messageBox;
@@ -64,15 +64,11 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.chat_ui);
-        startService(new Intent(this,ChatService.class));
-
-
-
-
-
+        Intent bindIntent = new Intent(this,ChatService.class);
+        bindService(bindIntent,connection,BIND_AUTO_CREATE);
         dbHelper = new mySQLite(this,"homework.db",null,1);
         db = dbHelper.getWritableDatabase();
-        messageBox = new MessageBoxManager(username,db);
+        messageBox = new MessageBoxManager(db);
         chat_list = findViewById(R.id.chatList);
         chat_list.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         chat_list.setStackFromBottom(true);
@@ -90,11 +86,12 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
+
         //申请权限
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.INTERNET}, 1);
+                    new String[]{Manifest.permission.READ_PHONE_STATE}, 1);
         }
 
         Button sendMsgButton = findViewById(R.id.send);
@@ -153,18 +150,21 @@ public class ChatActivity extends AppCompatActivity {
                             msg.obj = message.getBody();
                             handler.sendMessage(msg);
                             System.out.println("新消息，来自" + from + ":" + message.getBody());
+                            chatbinder.startShinning();
                         }
                     });
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }).start();
 
-
     }
     @Override
     protected void onResume() {
+        if(chatbinder!=null)
+            chatbinder.stopShinning();
         historyMessages = messageBox.getMessages();
         adapter = new chatAdapter(ChatActivity.this, R.layout.item, historyMessages);
         chat_list.setAdapter(adapter);
@@ -173,7 +173,6 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        xmpptcpConnection.disconnect();
         Log.i("msg","disconnect");
         super.onDestroy();
     }

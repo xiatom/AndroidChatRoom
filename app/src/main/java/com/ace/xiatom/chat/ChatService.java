@@ -8,11 +8,35 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
+
+
 public class ChatService extends Service {
+
+    Notification.Builder builder;
+    NotifyBinder mbinder = new NotifyBinder();
+    class NotifyBinder extends Binder{
+        public void startShinning(){
+            if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.O){
+                builder.setContentText("您有新的消息").setLargeIcon(BitmapFactory.decodeResource(getResources(),R.drawable.ic_newmsg));
+                Notification notification = builder.build();
+                startForeground(1,notification);
+            }
+        }
+        public void stopShinning(){
+            if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.O){
+                builder.setContentText("对话").setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher_foreground));
+                Notification notification = builder.build();
+                startForeground(1,notification);
+            }
+        }
+
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -30,17 +54,15 @@ public class ChatService extends Service {
             mChannel.enableVibration(true);
             NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.createNotificationChannel(mChannel);
-            Notification.Builder builder = new Notification.Builder(this, channelId);
-            builder.setSmallIcon(R.drawable.ic_launcher_background)
-                    .setContentTitle("情侣空间")
+            builder = new Notification.Builder(this, channelId);
+            builder.setContentTitle("情侣空间")
                     .setContentText("对话")
-                    .setSmallIcon(R.drawable.ic_bigicon)
+                    .setSmallIcon(R.drawable.ic_smallicon)
                     .setWhen(System.currentTimeMillis())
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher_foreground))
                     .setContentIntent(pi);
             Notification notification = builder.build();
             startForeground(1,notification);
-            Log.i("msgs","here");
         }
 
     }
@@ -50,7 +72,11 @@ public class ChatService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return mbinder;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 }

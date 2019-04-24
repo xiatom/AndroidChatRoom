@@ -2,31 +2,32 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:id="@+id/list_item"
-    android:layout_height="80dp">
+    android:layout_height="wrap_content">
 
     <ImageView
         android:background="@drawable/ic_girl"
         android:layout_gravity="bottom"
         android:id="@+id/chat_person_from"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:scaleType="centerInside"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_weight="20" />
 
     <FrameLayout
         android:layout_weight="50"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
         <ImageView
             android:id="@+id/bubbleOther"
             android:layout_marginLeft="0dp"
-            android:layout_width="300dp"
+            android:layout_width="250dp"
             android:background="@drawable/ic_bubble_other"
             android:layout_gravity="center"
             android:layout_height="match_parent" />
         <ImageView
             android:id="@+id/bubbleSelf"
             android:layout_marginRight="0dp"
-            android:layout_width="300dp"
+            android:layout_width="250dp"
             android:layout_gravity="center"
             android:background="@drawable/ic_bubble_slef"
             android:layout_height="match_parent" />
@@ -44,7 +45,7 @@
         android:layout_gravity="bottom"
         android:background="@drawable/ic_boy"
         android:id="@+id/chat_person_self"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_weight="20" />
 </LinearLayout>

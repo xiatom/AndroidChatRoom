@@ -8,18 +8,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.AttributeSet;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -31,10 +25,7 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.tcp.*;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
-
-import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -86,10 +77,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 try {
                     ChatManager chatManager = ChatManager.getInstanceFor(xmpptcpConnection);
-                    EntityBareJid jid = JidCreate.entityBareFrom("bubble@localhost");
+                    EntityBareJid jid = JidCreate.entityBareFrom("ace@localhost");
                     Chat chat = chatManager.chatWith(jid);
                     EditText msg = findViewById(R.id.sendMsg);
                     String message = msg.getText().toString();
+                    if(message.equals(""))
+                        return;
                     msg.setText("");
                     chat.send(message);
                     messageBox.insertMeg(new chat_content(false,message));
@@ -132,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
                             android.os.Message msg = new android.os.Message();
                             msg.what = UPDATE_TEXT;
                             msg.obj = message.getBody();
-//                            msg.obj = new String[]{};
                             handler.sendMessage(msg);
                             System.out.println("新消息，来自" + from + ":" + message.getBody());
                         }
@@ -147,11 +139,9 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onResume() {
-        Log.i("msg","getting msg");
         data = messageBox.getMessages();
         adapter = new chatAdapter(MainActivity.this, R.layout.item, data);
         lv.setAdapter(adapter);
-        Log.i("msg","getting suc");
         super.onResume();
     }
 

@@ -12,11 +12,11 @@ import java.util.List;
  * Created by xiatom on 2019/4/24.
  */
 
-public class getMessages {
+public class MessageBoxManager {
 
     String self;
     SQLiteDatabase db;
-    public getMessages(String self,SQLiteDatabase db){
+    public MessageBoxManager(String self, SQLiteDatabase db){
         this.self = self;
         this.db = db;
     }

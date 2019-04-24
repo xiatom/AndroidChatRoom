@@ -1,9 +1,13 @@
 package com.ace.xiatom.chat;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -13,7 +17,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -29,50 +32,73 @@ import java.net.InetAddress;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity {
 
-    ListView lv;
+
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            Log.d("msg","Service Disconnected");
+        }
+    };
+
+
+
+
+    ListView chat_list;
     chatAdapter adapter;
-    List<chat_content> data;
+    List<chat_content> historyMessages;
     private final int UPDATE_TEXT = 1;
     AbstractXMPPConnection xmpptcpConnection;
     private String username;
     private SQLiteDatabase db;
     private mySQLite dbHelper;
-    getMessages messageBox;
+    MessageBoxManager messageBox;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.chat_ui);
+        startService(new Intent(this,ChatService.class));
+
+
+
+
+
         dbHelper = new mySQLite(this,"homework.db",null,1);
         db = dbHelper.getWritableDatabase();
-        messageBox = new getMessages(username,db);
-
-        lv = findViewById(R.id.chatList);
-        lv.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-        lv.setStackFromBottom(true);
-
-
+        messageBox = new MessageBoxManager(username,db);
+        chat_list = findViewById(R.id.chatList);
+        chat_list.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+        chat_list.setStackFromBottom(true);
+        //异步处理收到的消息
         final Handler handler = new Handler() {
             @Override
             public void handleMessage(android.os.Message msg) {
                 switch (msg.what) {
                     case UPDATE_TEXT:
-                        String mm = msg.obj.toString();
-                        messageBox.insertMeg(new chat_content(true,mm));
-                        data.add(new chat_content(true,mm));
+                        String message = msg.obj.toString();
+                        messageBox.insertMeg(new chat_content(true,message));
+                        historyMessages.add(new chat_content(true,message));
                         adapter.notifyDataSetChanged();
                 }
             }
         };
 
+        //申请权限
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.INTERNET}, 1);
         }
-        Button btn = findViewById(R.id.send);
-        btn.setOnClickListener(new View.OnClickListener() {
+
+        Button sendMsgButton = findViewById(R.id.send);
+        sendMsgButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
@@ -86,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
                     msg.setText("");
                     chat.send(message);
                     messageBox.insertMeg(new chat_content(false,message));
-                    data.add(new chat_content(false,message));
+                    historyMessages.add(new chat_content(false,message));
                     adapter.notifyDataSetChanged();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -100,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
                 XMPPTCPConnectionConfiguration.Builder builder = XMPPTCPConnectionConfiguration.builder();
                 try {
                     builder.setXmppDomain("localhost");
-                    builder.setHostAddress(InetAddress.getByName("10.236.221.206"));
+                    builder.setHostAddress(InetAddress.getByName("10.240.252.96"));
                     builder.setPort(5222);
                     builder.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
                     builder.setCompressionEnabled(true);
@@ -139,10 +165,16 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onResume() {
-        data = messageBox.getMessages();
-        adapter = new chatAdapter(MainActivity.this, R.layout.item, data);
-        lv.setAdapter(adapter);
+        historyMessages = messageBox.getMessages();
+        adapter = new chatAdapter(ChatActivity.this, R.layout.item, historyMessages);
+        chat_list.setAdapter(adapter);
         super.onResume();
     }
 
+    @Override
+    protected void onDestroy() {
+        xmpptcpConnection.disconnect();
+        Log.i("msg","disconnect");
+        super.onDestroy();
+    }
 }

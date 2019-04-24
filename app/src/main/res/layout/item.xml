@@ -9,8 +9,8 @@
         android:layout_gravity="bottom"
         android:id="@+id/chat_person_from"
         android:scaleType="centerInside"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_weight="20" />
 
     <FrameLayout
@@ -45,7 +45,7 @@
         android:layout_gravity="bottom"
         android:background="@drawable/ic_boy"
         android:id="@+id/chat_person_self"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_weight="20" />
 </LinearLayout>

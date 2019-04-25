@@ -1,20 +1,15 @@
 package com.ace.xiatom.chat;
 import android.Manifest;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.BitmapFactory;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -60,10 +55,20 @@ public class ChatActivity extends AppCompatActivity {
     private SQLiteDatabase db;
     private mySQLite dbHelper;
     MessageBoxManager messageBox;
+    String username ;
+    String password;
+    String sendto;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.chat_ui);
+
+        ActionBar actionBar = getSupportActionBar();
+        Intent intent = getIntent();
+        username = intent.getStringExtra("name");
+        password = intent.getStringExtra("password");
+        sendto = intent.getStringExtra("sendto");
+        actionBar.setTitle(sendto);
         Intent bindIntent = new Intent(this,ChatService.class);
         bindService(bindIntent,connection,BIND_AUTO_CREATE);
         dbHelper = new mySQLite(this,"homework.db",null,1);
@@ -100,7 +105,7 @@ public class ChatActivity extends AppCompatActivity {
             public void onClick(View view) {
                 try {
                     ChatManager chatManager = ChatManager.getInstanceFor(xmpptcpConnection);
-                    EntityBareJid jid = JidCreate.entityBareFrom("ace@localhost");
+                    EntityBareJid jid = JidCreate.entityBareFrom(sendto+"@localhost");
                     Chat chat = chatManager.chatWith(jid);
                     EditText msg = findViewById(R.id.sendMsg);
                     String message = msg.getText().toString();
@@ -139,7 +144,7 @@ public class ChatActivity extends AppCompatActivity {
                     presence.setStatus("在线");
                     //设置在线
                     xmpptcpConnection.sendStanza(presence);
-                    xmpptcpConnection.login("bubble", "1234");
+                    xmpptcpConnection.login(username, password);
                     //接受消息
                     ChatManager chatManager = ChatManager.getInstanceFor(xmpptcpConnection);
                     chatManager.addIncomingListener(new IncomingChatMessageListener() {
@@ -153,13 +158,11 @@ public class ChatActivity extends AppCompatActivity {
                             chatbinder.startShinning();
                         }
                     });
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }).start();
-
     }
     @Override
     protected void onResume() {
@@ -170,9 +173,9 @@ public class ChatActivity extends AppCompatActivity {
         chat_list.setAdapter(adapter);
         super.onResume();
     }
-
     @Override
     protected void onDestroy() {
+        unbindService(connection);
         Log.i("msg","disconnect");
         super.onDestroy();
     }
